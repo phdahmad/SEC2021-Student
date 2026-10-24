@@ -22,7 +22,7 @@ work, feedback and scanned sheets.
 | `node tools/guard.mjs` | Checks `dist/` again |
 | `node tools/reissue.mjs --id <ID>` | New code for one student; re-encrypts only that bundle |
 | `node tools/deploy.mjs` | Publishes `dist/` to `gh-pages` as one commit with no history |
-| `node --test tests/portal.test.mjs` | Security tests (fake data only) |
+| `npm test` | Security and importer tests (fake data only) |
 
 Set the data folder in `local.config.json` (copy `local.config.example.json`).
 
@@ -35,6 +35,11 @@ Fonts: Inter, Crimson Pro, JetBrains Mono and Tajawal (Arabic) under the SIL Ope
 | `node tools/review-page.mjs --batch <ID>` | Writes `batches/<ID>/review.html` in the data folder |
 | `node tools/results-from-review.mjs --batch <ID> [--approve "..."]` | Builds `results/<ID>.json` from the draft + saved review and lists the differences |
 | `node tools/review-hub.mjs` | Writes `review/index.html` (one card per batch) in the data folder |
+| `node tools/import-xlsx.mjs --roster` | Writes `roster.csv` from the marking workbook (never overwrites) |
+| `node tools/import-xlsx.mjs --batch MID` (or `Q1`, `Q2`) | Imports marks already graded in Excel into `<ID>.draft.json`, matched by university ID, and compares every total with the workbook |
+
+The importer reads `gradebook.json` (where the workbooks are) and `batches/<ID>/content.json`
+(titles, topics, explanations, true/false key, page numbers, Arabic feedback per deducted part) from the data folder.
 
 The feedback text is built by `review/feedback-core.js`, shared by the review page preview and
 `results-from-review.mjs`. Feedback is Arabic; course terms stay in English and are isolated with `<bdi>`.
