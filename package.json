@@ -4,7 +4,7 @@
   "type": "module",
   "description": "SEC2021 student portal: static page + encrypted per-student bundles",
   "scripts": {
-    "test": "node --test tests/portal.test.mjs",
+    "test": "node --test tests/portal.test.mjs tests/import.test.mjs",
     "tokens": "node tools/tokens.mjs",
     "build": "node tools/build.mjs",
     "guard": "node tools/guard.mjs",
