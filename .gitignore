@@ -1,0 +1,29 @@
+# ---- NEVER commit student data ----
+# The plaintext data lives in F:\SEC2021\Gradebook\StudentPortal (outside this repo).
+# These rules are a second line of defence in case a file is copied here by mistake.
+dist/
+local.config.json
+*.csv
+*.xlsx
+*.xls
+*.pdf
+*.jpg
+*.jpeg
+*.png
+*.webp
+*.heic
+*.tif
+*.tiff
+*.bin
+results/
+batches/
+Gradebook/
+StudentPortal/
+deploy-state.json
+# fake images used by the tests are allowed
+!tests/fixtures/*.webp
+# editor / OS
+node_modules/
+.DS_Store
+Thumbs.db
+desktop.ini

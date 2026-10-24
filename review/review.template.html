@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>مراجعة التصحيح · SEC2021</title>
+<style>
+:root {
+  --bg: #F7F4EE; --surface: #FFFFFF; --surface-2: #EFEAE0; --ink: #172426; --muted: #4F5D60; --line: #DED7C9;
+  --primary: #1B4D57; --on-primary: #FFFFFF; --accent: #D4A958; --accent-ink: #7A5512;
+  --ok-bg: #E3F1E7; --ok-ink: #1D5632; --miss-bg: #F8E3DF; --miss-ink: #8A2B1F;
+  --flag-bg: #FBF0DF; --flag-line: #E6C595; --edit-bg: #E1EEF0; --edit-ink: #1B4D57;
+  --focus: #B8862F; --radius: 12px; --shadow: 0 1px 2px rgba(23,36,38,.06), 0 4px 16px rgba(23,36,38,.06);
+  --arabic: "Segoe UI", Tahoma, "Tajawal", "Noto Naskh Arabic", Arial, sans-serif;
+  --latin: "Segoe UI", system-ui, Roboto, Arial, sans-serif;
+  --mono: Consolas, ui-monospace, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0F1719; --surface: #172326; --surface-2: #1F2E32; --ink: #EEF1EE; --muted: #AEBBBD; --line: #2F4146;
+    --primary: #8FCBD6; --on-primary: #0D1A1D; --accent-ink: #E6C27A;
+    --ok-bg: #1C3527; --ok-ink: #A3DBB6; --miss-bg: #43211C; --miss-ink: #F4B5AA;
+    --flag-bg: #3A2E1C; --flag-line: #7A5A2C; --edit-bg: #1D3A40; --edit-ink: #B5E0E8;
+    --focus: #E6C27A; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+    --bg: #0F1719; --surface: #172326; --surface-2: #1F2E32; --ink: #EEF1EE; --muted: #AEBBBD; --line: #2F4146;
+    --primary: #8FCBD6; --on-primary: #0D1A1D; --accent-ink: #E6C27A;
+    --ok-bg: #1C3527; --ok-ink: #A3DBB6; --miss-bg: #43211C; --miss-ink: #F4B5AA;
+    --flag-bg: #3A2E1C; --flag-line: #7A5A2C; --edit-bg: #1D3A40; --edit-ink: #B5E0E8;
+    --focus: #E6C27A; --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.25);
+    color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--arabic); display: flex; flex-direction: column; }
+button, input, textarea, select { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+[hidden] { display: none !important; }
+.en { direction: ltr; text-align: left; font-family: var(--latin); unicode-bidi: isolate; }
+.mono { font-family: var(--mono); direction: ltr; unicode-bidi: isolate; }
+
+/* top bar */
+.top { display: flex; align-items: center; gap: 12px; padding: 10px 16px; background: #1B4D57; color: #fff; flex-wrap: wrap; }
+.top h1 { font-size: 17px; margin: 0; font-weight: 700; }
+.top .sub { opacity: .8; font-size: 13px; }
+.top .grow { flex: 1; }
+.progress { font-size: 13px; background: rgba(255,255,255,.12); padding: 4px 10px; border-radius: 999px; }
+.status { font-size: 13px; padding: 4px 10px; border-radius: 999px; background: rgba(255,255,255,.12); }
+.status.dirty { background: #D4A958; color: #2A1B05; font-weight: 600; }
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 10px; padding: 7px 14px; cursor: pointer; }
+.btn:hover { border-color: var(--primary); }
+.btn.primary { background: #D4A958; color: #2A1B05; border-color: #D4A958; font-weight: 700; }
+.top .btn { background: rgba(255,255,255,.1); color: #fff; border-color: rgba(255,255,255,.25); }
+.top .btn.primary { background: #D4A958; color: #2A1B05; border-color: #D4A958; }
+
+/* layout */
+.layout { flex: 1; min-height: 0; display: grid; grid-template-columns: 280px minmax(440px, 1fr) minmax(360px, 42%); }
+@media (max-width: 1100px) { .layout { grid-template-columns: 260px 1fr; grid-template-rows: minmax(0, 1fr) 48vh; } .list { grid-row: 1 / span 2; } .scan { grid-column: 2; border-top: 1px solid var(--line); } }
+@media (max-width: 720px) { .layout { display: block; } .list { max-height: 40vh; } }
+
+/* list */
+.list { border-inline-end: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; min-height: 0; }
+.list-tools { padding: 10px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.list-tools input { width: 100%; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 2px 10px; font-size: 13px; cursor: pointer; }
+.chip[aria-pressed="true"] { background: #1B4D57; color: #fff; border-color: #1B4D57; }
+.students { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+.students li button { width: 100%; text-align: start; display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; padding: 9px 12px; border: 0; border-bottom: 1px solid var(--line); background: none; cursor: pointer; }
+.students li button:hover { background: var(--surface-2); }
+.students li button[aria-current="true"] { background: var(--edit-bg); box-shadow: inset -4px 0 0 #1B4D57; }
+.s-name { font-weight: 600; font-size: 14px; }
+.s-meta { font-size: 12px; color: var(--muted); display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.s-score { font-weight: 700; font-size: 14px; align-self: center; grid-row: 1 / span 2; grid-column: 2; }
+.tag { font-size: 11px; padding: 0 7px; border-radius: 999px; background: var(--surface-2); }
+.tag.flag { background: var(--flag-bg); color: var(--accent-ink); border: 1px solid var(--flag-line); }
+.tag.done { background: var(--ok-bg); color: var(--ok-ink); }
+.tag.edit { background: var(--edit-bg); color: var(--edit-ink); }
+
+/* main */
+.main { overflow-y: auto; padding: 16px; min-height: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; margin-bottom: 14px; }
+.card h2 { font-size: 16px; margin: 0 0 10px; }
+.head { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.head .who { flex: 1; min-width: 200px; }
+.head .who h2 { font-size: 20px; margin: 0; }
+.head .who p { margin: 2px 0 0; color: var(--muted); font-size: 13px; }
+.big { font-size: 28px; font-weight: 800; direction: ltr; unicode-bidi: isolate; }
+.scaled { font-size: 13px; color: var(--muted); }
+.navbtns { display: flex; gap: 6px; }
+.reviewed { display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); cursor: pointer; user-select: none; }
+.reviewed input { width: 18px; height: 18px; accent-color: #1D5632; }
+.flags { background: var(--flag-bg); border-color: var(--flag-line); }
+.flags ul { margin: 0; padding-inline-start: 20px; }
+.flags li { margin-bottom: 6px; }
+.flags textarea { margin-top: 6px; }
+.second { font-size: 13px; color: var(--muted); margin-top: 6px; }
+table.obj { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.obj th, table.obj td { padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: center; }
+table.obj th { font-size: 12px; color: var(--muted); font-weight: 600; }
+table.obj td.topic { text-align: start; }
+table.obj td:first-child { white-space: nowrap; direction: ltr; unicode-bidi: isolate; }
+table.obj tr.flagged td { background: var(--flag-bg); }
+.letter { display: inline-block; min-width: 28px; padding: 1px 6px; border-radius: 6px; font-weight: 700; font-family: var(--mono); }
+.letter.ok { background: var(--ok-bg); color: var(--ok-ink); }
+.letter.no { background: var(--miss-bg); color: var(--miss-ink); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; direction: ltr; }
+.seg button { border: 0; background: var(--surface); padding: 2px 12px; cursor: pointer; font-weight: 700; }
+.seg button[aria-pressed="true"] { background: #1B4D57; color: #fff; }
+.changed { font-size: 11px; color: var(--edit-ink); background: var(--edit-bg); border-radius: 999px; padding: 0 6px; margin-inline-start: 4px; }
+.answer { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; white-space: pre-wrap; font-size: 14px; margin-bottom: 10px; }
+.parts { display: flex; gap: 12px; flex-wrap: wrap; align-items: end; margin-bottom: 8px; }
+.part label { display: block; font-size: 12px; color: var(--muted); }
+.part input { width: 74px; padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); text-align: center; direction: ltr; }
+.part input.edited { border-color: #1B4D57; background: var(--edit-bg); }
+.part .of { font-size: 12px; color: var(--muted); direction: ltr; unicode-bidi: isolate; }
+.qtotal { font-weight: 700; margin-inline-start: auto; direction: ltr; unicode-bidi: isolate; }
+.rubric { font-size: 12.5px; color: var(--muted); margin: 0 0 8px; }
+.lbl { display: block; font-size: 12px; color: var(--muted); margin: 6px 0 3px; }
+textarea { width: 100%; min-height: 64px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); resize: vertical; }
+.preview { border-inline-start: 4px solid #D4A958; }
+.preview .sum { margin: 0 0 10px; }
+.preview ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+.preview li { border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; }
+.preview .ref { font-weight: 700; font-size: 13px; display: block; margin-bottom: 2px; }
+.empty { color: var(--muted); padding: 40px; text-align: center; }
+
+/* scan panel (always LTR inside) */
+.scan { border-inline-start: 1px solid var(--line); background: var(--surface-2); display: flex; flex-direction: column; min-height: 0; }
+.scan-bar { display: flex; gap: 6px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--line); background: var(--surface); flex-wrap: wrap; }
+.scan-bar .grow { flex: 1; }
+.scan-bar .btn { padding: 3px 10px; }
+.scan-bar .btn[aria-pressed="true"] { background: #1B4D57; color: #fff; border-color: #1B4D57; }
+.scan-stage { flex: 1; overflow: auto; min-height: 0; direction: ltr; padding: 8px; }
+.scan-stage img { display: block; margin: 0 auto; background: #fff; box-shadow: var(--shadow); max-width: none; }
+.toast { position: fixed; inset-inline-start: 50%; bottom: 20px; transform: translateX(50%); background: #172426; color: #fff; padding: 10px 16px; border-radius: 10px; box-shadow: var(--shadow); z-index: 10; }
+[dir="rtl"] .toast { transform: translateX(50%); }
+.stale { font-size: 12px; color: var(--accent-ink); margin: 4px 0 0; }
+.verbatim { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; white-space: normal; direction: ltr; }
+.verbatim dt { font-weight: 700; font-size: 12.5px; color: var(--muted); }
+.verbatim dd { margin: 0; white-space: pre-wrap; }
+.verbatim dd.ar-text { text-align: right; font-family: var(--arabic); }
+.verbatim dd.blank { color: var(--muted); font-style: italic; }
+textarea.note { min-height: 44px; background: var(--surface-2); }
+.writing select { padding: 5px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); }
+.en-fb { margin: 6px 0 0; padding-top: 6px; border-top: 1px dashed var(--line); color: var(--muted); }
+.ar-fb { margin: 6px 0 0; padding-top: 6px; border-top: 1px dashed var(--line); text-align: right; font-family: var(--arabic); }
+.writing-prev { margin-top: 12px; direction: rtl; text-align: right; font-family: var(--arabic); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; }
+.writing-prev h3 { font-size: 14px; margin: 0 0 4px; display: flex; gap: 8px; align-items: center; }
+textarea[dir="rtl"] { unicode-bidi: plaintext; }
+.theme-btn { min-width: 40px; }
+.rules summary { cursor: pointer; font-weight: 700; }
+.rules ol { margin: 8px 0 0; padding-inline-start: 22px; display: grid; gap: 6px; font-size: 14px; }
+.tfx { display: block; font-size: 12.5px; color: var(--muted); margin-top: 2px; text-align: start; }
+.serial { font-family: var(--mono); font-size: 12px; background: var(--surface-2); border-radius: 6px; padding: 0 6px; }
+.kbd { font-family: var(--mono); font-size: 12px; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1 id="title">مراجعة التصحيح</h1>
+    <div class="sub">صفحة داخلية للمدرّس فقط · لا تُنشر</div>
+  </div>
+  <span class="grow"></span>
+  <span class="progress" id="progress"></span>
+  <span class="status" id="status">لا تعديلات</span>
+  <button class="btn theme-btn" id="themeBtn" type="button" title="الوضع الفاتح أو الداكن" aria-label="الوضع الفاتح أو الداكن"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" style="display:block;margin:auto"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 3.5a8.5 8.5 0 0 1 0 17z" fill="currentColor"/></svg></button>
+  <button class="btn" id="loadBtn" type="button" title="افتح ملف مراجعة محفوظ سابقاً">فتح ملف محفوظ</button>
+  <button class="btn primary" id="saveBtn" type="button">حفظ <span class="kbd">Ctrl+S</span></button>
+  <input type="file" id="loadInput" accept=".json,application/json" hidden>
+</header>
+
+<div class="layout">
+  <nav class="list" aria-label="قائمة الطلبة">
+    <div class="list-tools">
+      <input id="search" type="search" placeholder="ابحث بالاسم أو الرقم الجامعي" aria-label="بحث">
+      <div class="chips" role="group" aria-label="تصفية">
+        <button class="chip" data-filter="all" aria-pressed="true" type="button">الكل</button>
+        <button class="chip" data-filter="flag" aria-pressed="false" type="button">تحتاج قراراً</button>
+        <button class="chip" data-filter="todo" aria-pressed="false" type="button">لم تُراجَع</button>
+        <button class="chip" data-filter="edited" aria-pressed="false" type="button">عدّلتُها</button>
+      </div>
+      <select id="sort" aria-label="الترتيب">
+        <option value="name">ترتيب بالاسم</option>
+        <option value="score">ترتيب بالدرجة</option>
+        <option value="serial">ترتيب الأوراق</option>
+        <option value="version">ترتيب بالنسخة</option>
+      </select>
+    </div>
+    <ul class="students" id="students"></ul>
+  </nav>
+
+  <main class="main" id="main"><p class="empty">اختر طالباً من القائمة.</p></main>
+
+  <aside class="scan" aria-label="الورقة الممسوحة">
+    <div class="scan-bar">
+      <span id="pageBtns"></span>
+      <span class="grow"></span>
+      <button class="btn" id="zoomOut" type="button" aria-label="تصغير">−</button>
+      <button class="btn" id="zoomFit" type="button">ملء العرض</button>
+      <button class="btn" id="zoomIn" type="button" aria-label="تكبير">+</button>
+    </div>
+    <div class="scan-stage" id="stage"><img id="scanImg" alt=""></div>
+  </aside>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script id="data" type="application/json">/*__DATA__*/</script>
+<script>/*__FEEDBACK__*/</script>
+<script>
+'use strict';
+// SEC2021 review page. buildFeedback, objDefault, objMax, objLabel, totalOf,
+// fmtMark and sumMarks come from review/feedback-core.js, inlined just above.
+const DATA = JSON.parse(document.getElementById('data').textContent);
+const A = DATA.assessment;
+const KEY = `sec2021-review-${A.id}`;
+const THEME_KEY = 'sec2021-review-theme';
+let dirty = false;
+const $ = (s) => document.querySelector(s);
+const h = (tag, attrs = {}, ...kids) => {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v == null || v === false) continue;
+    if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'class') el.className = v;
+    else el.setAttribute(k, v === true ? '' : v);
+  }
+  for (const k of kids.flat()) if (k != null && k !== false) el.append(k.nodeType ? k : String(k));
+  return el;
+};
+const LEVELS = { clear: 'واضحة وسليمة غالباً', understandable: 'مفهومة مع أخطاء متكررة', hard_to_follow: 'يصعب فهمها في مواضع', arabic: 'كتب أغلب إجاباته بالعربية', blank: 'لم يكتب إجابات' };
+// Arabic text with English words (RAM, SSD, Excel, docx…): isolate each Latin run so the order stays right.
+function mixed(text) {
+  return String(text).split(/("[^"؀-ۿ]*"|“[^”؀-ۿ]*”|[A-Za-z][^؀-ۿ"“”«»،؛]*[A-Za-z0-9)'’]|\d+(?:[-–/]\d+)+|\d+(?:\.\d+)?%)/)
+    .map((part, i) => (i % 2 ? h('bdi', { dir: 'ltr', lang: 'en' }, part) : part));
+}
+const fmt = fmtMark, sum = sumMarks;
+const en = (tag, attrs, ...kids) => h(tag, { ...attrs, class: ((attrs && attrs.class) || '') + ' en', dir: 'ltr', lang: 'en' }, ...kids);
+const ar = (tag, attrs, text) => h(tag, { ...attrs, dir: 'rtl', lang: 'ar' }, mixed(text ?? ''));
+const isAr = (t) => /[؀-ۿ]/.test(t ?? '');
+const topic = (x) => (x.topicAr ? ar('span', {}, x.topicAr) : en('span', {}, x.topic ?? ''));
+
+// ---------- theme: follows the system unless the teacher picks one ----------
+function applyTheme(t) { if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; }
+try { applyTheme(localStorage.getItem(THEME_KEY)); } catch { /* storage blocked */ }
+$('#themeBtn').addEventListener('click', () => {
+  const cur = document.documentElement.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const next = cur === 'dark' ? 'light' : 'dark';
+  applyTheme(next); try { localStorage.setItem(THEME_KEY, next); } catch { /* storage blocked */ }
+});
+
+// ---------- state: draft defaults, then the saved review on top ----------
+const byId = new Map(DATA.students.map((s) => [s.id, s]));
+const OBJ = (s) => A.versions[s.v].objective ?? [];
+const SHORT = (s) => A.versions[s.v].short ?? [];
+const PAGES = A.pages ?? 3;
+const WRITING = A.writingTip === true;
+const MANY_VERSIONS = Object.keys(A.versions).length > 1;
+function defaults(s) {
+  return {
+    obj: OBJ(s).map((o, i) => objDefault(o, i, s)),
+    sq: s.short.map((q) => [...q.marks]), sn: s.short.map((q) => q.note ?? ''),
+    far: s.short.map((q) => q.fb?.ar ?? ''), fen: s.short.map((q) => q.fb?.en ?? ''),
+    wLevel: s.writing?.level ?? '', wTip: s.writing?.tip_ar ?? '',
+    summaryExtra: '', decision: '', reviewed: false,
+  };
+}
+const state = {};
+for (const s of DATA.students) state[s.id] = defaults(s);
+function merge(saved) {
+  if (!saved || saved.batch !== A.id || !saved.students) return 0;
+  let n = 0;
+  for (const [id, rec] of Object.entries(saved.students)) if (state[id]) { Object.assign(state[id], rec); n++; }
+  return n;
+}
+merge(DATA.saved);
+let savedAt = DATA.saved?.savedAt || null;
+// a newer unsaved copy in this browser wins only if the teacher agrees
+try {
+  const local = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (local && (!savedAt || local.savedAt > savedAt) && local.dirty) {
+    if (confirm('توجد تعديلات لم تُحفظ في ملف من جلسة سابقة على هذا المتصفح. هل أستعيدها؟')) { merge(local); setDirty(true, false); }
+  }
+} catch { /* storage blocked */ }
+
+// ---------- scoring ----------
+const round = (v, step) => Math.round(Math.round(v / step) * step * 100) / 100;
+const total = (id) => totalOf(state[id]);
+function isEdited(id) {
+  const d = defaults(byId.get(id)), r = state[id];
+  return r.obj.some((v, i) => +v !== +d.obj[i])
+    || r.sq.some((q, j) => q.some((v, k) => +v !== +d.sq[j][k]))
+    || ['sn', 'far', 'fen'].some((k) => r[k].some((v, j) => (v ?? '') !== (d[k][j] ?? '')))
+    || ['wLevel', 'wTip', 'summaryExtra'].some((k) => (r[k] ?? '') !== (d[k] ?? ''));
+}
+const scaledText = (t) => (A.weight
+  ? `← ${fmt(Math.round(t / A.max * A.weight * 100) / 100)} من ${A.weight}% من درجة المقرر`
+  : 'للتدريب، لا تدخل في درجة المقرر');
+
+// ---------- list ----------
+let current = null, filter = 'all', query = '', sortBy = A.defaultSort ?? 'serial';
+if (!MANY_VERSIONS) $('#sort option[value="version"]').remove();
+if (!DATA.students.some((s) => s.serial != null)) { $('#sort option[value="serial"]').remove(); if (sortBy === 'serial') sortBy = 'name'; }
+$('#sort').value = sortBy;
+function ordered(list) {
+  const cmp = {
+    name: (a, b) => a.name.localeCompare(b.name, 'ar'),
+    score: (a, b) => total(a.id) - total(b.id),
+    serial: (a, b) => (a.serial ?? 999) - (b.serial ?? 999),
+    version: (a, b) => (a.v + a.name).localeCompare(b.v + b.name, 'ar'),
+  }[sortBy];
+  return [...list].sort(cmp);
+}
+function renderList() {
+  const ul = $('#students'); ul.replaceChildren();
+  const rows = ordered(DATA.students.filter((s) => {
+    if (query && !(s.name.includes(query) || s.id.includes(query))) return false;
+    if (filter === 'flag') return s.flags.length > 0;
+    if (filter === 'todo') return !state[s.id].reviewed;
+    if (filter === 'edited') return isEdited(s.id);
+    return true;
+  }));
+  for (const s of rows) {
+    const r = state[s.id];
+    ul.append(h('li', {}, h('button', { type: 'button', 'aria-current': s.id === current ? 'true' : 'false', onclick: () => open(s.id) },
+      h('span', { class: 's-name' }, s.name),
+      h('span', { class: 's-score', dir: 'ltr' }, fmt(total(s.id))),
+      h('span', { class: 's-meta' },
+        s.serial != null ? h('span', { class: 'serial', title: 'رقم الورقة في الكشف' }, String(s.serial)) : null,
+        h('span', { class: 'mono' }, s.id),
+        MANY_VERSIONS ? h('span', { class: 'tag' }, s.v) : null,
+        s.flags.length && !r.reviewed ? h('span', { class: 'tag flag' }, 'قرار') : null,
+        isEdited(s.id) ? h('span', { class: 'tag edit' }, 'معدَّل') : null,
+        r.reviewed ? h('span', { class: 'tag done' }, '✓ رُوجع') : null))));
+  }
+  const done = DATA.students.filter((s) => state[s.id].reviewed).length;
+  $('#progress').textContent = `رُوجع ${done} من ${DATA.students.length}`;
+}
+
+// ---------- student view ----------
+function open(id) {
+  current = id; page = A.startPage ?? 1; zoom = 'fit';
+  renderMain(); renderList(); showPage();
+  history.replaceState(null, '', '#' + id);
+}
+function change(fn) { fn(); setDirty(true); renderList(); renderTotals(); renderPreview(); }
+function renderTotals() {
+  const t = total(current);
+  $('#tot').textContent = `${fmt(t)} / ${A.max}`;
+  $('#scaled').replaceChildren(...mixed(scaledText(t)));
+  document.querySelectorAll('[data-qtotal]').forEach((el) => {
+    const j = +el.dataset.qtotal;
+    el.textContent = `${fmt(sum(state[current].sq[j]))} / ${fmt(sum(SHORT(byId.get(current))[j].parts.map((p) => p.max)))}`;
+  });
+  const ot = $('#objtot');
+  if (ot) ot.textContent = `${fmt(sum(state[current].obj))} / ${fmt(sum(OBJ(byId.get(current)).map(objMax)))}`;
+}
+function renderPreview() {
+  const box = $('#preview'); if (!box) return;
+  const fb = buildFeedback(A, byId.get(current), state[current]);
+  box.replaceChildren(h('h2', {}, 'ما سيراه الطالب في صفحته (تغذية راجعة)'),
+    ar('p', { class: 'sum' }, fb.summary),
+    h('ul', {}, fb.points.map((p) => h('li', {}, ar('span', { class: 'ref' }, p.ref), ar('span', {}, p.text),
+      p.textEn ? en('p', { class: 'en-fb' }, p.textEn) : null))),
+    fb.writing ? h('div', { class: 'writing-prev' }, h('h3', {}, 'نصيحة في الكتابة', fb.writing.level ? h('span', { class: 'tag' }, LEVELS[fb.writing.level] || fb.writing.level) : null),
+      h('p', {}, mixed(fb.writing.tipAr))) : '');
+}
+function renderMain() {
+  const s = byId.get(current), r = state[current], d = defaults(s);
+  const main = $('#main'); main.replaceChildren();
+  const list = ordered(DATA.students);
+  const idx = list.findIndex((x) => x.id === current);
+  const go = (k) => open(list[(idx + k + list.length) % list.length].id);
+
+  const meta = [h('span', { class: 'mono' }, s.id),
+    s.section ? ` · الشعبة ${s.section}` : null,
+    s.serial != null ? ` · الورقة رقم ${s.serial} في الكشف` : null,
+    MANY_VERSIONS ? ` · النسخة ${s.v}` : null];
+  main.append(h('section', { class: 'card head' },
+    h('div', { class: 'who' }, h('h2', {}, s.name), h('p', {}, meta)),
+    h('div', {}, h('div', { class: 'big', id: 'tot' }), h('div', { class: 'scaled', id: 'scaled' })),
+    h('label', { class: 'reviewed' }, h('input', { type: 'checkbox', checked: r.reviewed, onchange: (e) => change(() => { r.reviewed = e.target.checked; }) }), 'تمت مراجعته'),
+    h('div', { class: 'navbtns' },
+      h('button', { class: 'btn', type: 'button', onclick: () => go(-1), title: 'Alt + سهم أعلى' }, 'السابق'),
+      h('button', { class: 'btn', type: 'button', onclick: () => go(1), title: 'Alt + سهم أسفل' }, 'التالي'))));
+
+  if (s.flags.length) {
+    main.append(h('section', { class: 'card flags' }, h('h2', {}, 'حالات تحتاج قرارك'),
+      h('ul', {}, s.flags.map((f) => h('li', {}, mixed(f)))),
+      s.second ? h('p', { class: 'second' }, 'ملاحظة القارئ الثاني: ', mixed(s.second)) : null,
+      h('label', { class: 'lbl', for: 'decision' }, 'قرارك أو ملاحظتك (لا تظهر للطالب)'),
+      h('textarea', { id: 'decision', dir: 'rtl', oninput: (e) => change(() => { r.decision = e.target.value; }) }, r.decision)));
+  }
+
+  // objective items (multiple choice, true/false with or without a correction)
+  const hasCorr = OBJ(s).some((o, i) => s.corrections?.[i]);
+  const rows = OBJ(s).map((o, i) => {
+    const a = (s.ans ?? '')[i], max = objMax(o), right = +r.obj[i] === max;
+    const flagged = s.flags.some((f) => f.includes(`الفقرة ${objLabel(o)}`) || new RegExp(`\\bQ${objLabel(o)}\\b`).test(f));
+    const steps = o.half ? [0, max / 2, max] : [0, max];
+    const seg = h('span', { class: 'seg' }, steps.map((v) => h('button', { type: 'button', 'aria-pressed': +r.obj[i] === v ? 'true' : 'false',
+      'aria-label': `الفقرة ${objLabel(o)}: ${fmt(v)}`, onclick: () => change(() => { r.obj[i] = v; renderMain(); }) }, fmt(v))));
+    const shownA = a === '-' || a === undefined ? '—' : a === 'T' ? 'صح' : a === 'F' ? 'خطأ' : a;
+    const shownK = o.key === 'T' ? 'صح' : o.key === 'F' ? 'خطأ' : o.key;
+    return h('tr', { class: flagged ? 'flagged' : null, onclick: () => setPage(o.page ?? 1) },
+      h('td', {}, h('b', {}, objLabel(o))),
+      h('td', { class: 'topic' }, topic(o)),
+      h('td', {}, h('span', { class: 'letter ' + (right ? 'ok' : 'no'), title: a === 'X' ? 'خياران معلَّمان' : a === '-' ? 'لا شيء معلَّم' : null }, shownA),
+        hasCorr && s.corrections?.[i] ? h('span', { class: 'tfx' }, mixed(s.corrections[i])) : null),
+      h('td', {}, h('span', { class: 'letter' }, shownK)),
+      h('td', {}, seg, +r.obj[i] !== +d.obj[i] ? h('span', { class: 'changed' }, 'معدَّل') : null));
+  });
+  if (rows.length) main.append(h('section', { class: 'card' },
+    h('div', { class: 'parts' }, h('h2', {}, A.objectiveTitleAr ?? 'الأسئلة الموضوعية'), h('span', { class: 'qtotal', id: 'objtot' })),
+    h('table', { class: 'obj' }, h('thead', {}, h('tr', {}, ['#', 'الموضوع', 'إجابة الطالب', 'المفتاح', 'الدرجة'].map((x) => h('th', {}, x)))), h('tbody', {}, rows)),
+    h('p', { class: 'rubric' }, 'X تعني خيارين معلَّمين، و— لا شيء معلَّم. التظليل الأصفر: فقرة فيها حالة ملتبسة. في الصح والخطأ: نصف للحكم ونصف للتصحيح.')));
+
+  // written questions
+  SHORT(s).forEach((q, j) => {
+    const sd = s.short[j];
+    const fbEdited = () => r.far[j] !== d.far[j];
+    const marksSame = () => r.sq[j].every((x, i) => +x === +d.sq[j][i]);
+    const parts = q.parts.map((p, k) => {
+      const step = p.step ?? 0.5;
+      const inp = h('input', { type: 'number', min: 0, max: p.max, step, value: r.sq[j][k], class: +r.sq[j][k] !== +d.sq[j][k] ? 'edited' : null,
+        'aria-label': `${q.labelAr ?? q.q} ${p.label}`,
+        oninput: (e) => {
+          let v = parseFloat(e.target.value); if (Number.isNaN(v)) return;
+          v = Math.max(0, Math.min(p.max, round(v, step)));
+          change(() => { r.sq[j][k] = v; });
+          e.target.classList.toggle('edited', +v !== +d.sq[j][k]);
+          stale.hidden = fbEdited() || marksSame();
+        } });
+      return h('div', { class: 'part' }, h('label', {}, mixed(p.label)), inp, h('span', { class: 'of' }, ` / ${fmt(p.max)}`));
+    });
+    const stale = h('p', { class: 'stale', hidden: fbEdited() || marksSame() }, 'غيّرتَ الدرجة: حدّث التوضيح للطالب ليوافق الدرجة الجديدة.');
+    const answer = sd.parts
+      ? h('dl', { class: 'answer verbatim' }, sd.parts.flatMap((p) => [h('dt', {}, mixed(p.label)),
+          p.text ? h('dd', { dir: isAr(p.text) ? 'rtl' : 'ltr', lang: isAr(p.text) ? 'ar' : 'en', class: isAr(p.text) ? 'ar-text' : 'en' }, isAr(p.text) ? mixed(p.text) : p.text) : h('dd', { class: 'blank' }, '(فارغ)')]))
+      : h('div', { class: 'answer', dir: 'auto' }, mixed((sd.text ?? '').split(' | ').join('\n')));
+    const pg = q.page ?? PAGES;
+    main.append(h('section', { class: 'card', onfocusin: () => setPage(pg), onclick: () => setPage(pg) },
+      h('h2', {}, `${q.labelAr ?? 'السؤال ' + q.q} · `, topic(q)),
+      h('span', { class: 'lbl' }, 'إجابة الطالب كما قُرئت (بأخطائها)'),
+      answer,
+      q.parts.length ? h('div', { class: 'parts' }, parts, h('span', { class: 'qtotal', 'data-qtotal': j })) : h('p', { class: 'rubric' }, 'تغذية راجعة فقط — بلا درجة.'),
+      q.rubricAr ? ar('p', { class: 'rubric' }, q.rubricAr) : q.rubric ? en('p', { class: 'rubric' }, q.rubric) : null,
+      h('label', { class: 'lbl', for: `sn${j}` }, 'سبب الدرجة — ملاحظة لك، لا تظهر للطالب'),
+      h('textarea', { id: `sn${j}`, class: 'note', dir: 'rtl', oninput: (e) => change(() => { r.sn[j] = e.target.value; }) }, r.sn[j]),
+      h('label', { class: 'lbl', for: `far${j}` }, 'توضيح للطالب بالعربية — يظهر في صفحته'),
+      h('textarea', { id: `far${j}`, dir: 'rtl', lang: 'ar', oninput: (e) => { change(() => { r.far[j] = e.target.value; }); stale.hidden = true; } }, r.far[j]),
+      h('label', { class: 'lbl', for: `fen${j}` }, 'ترجمة إنجليزية اختيارية — تظهر تحت التوضيح العربي'),
+      h('textarea', { id: `fen${j}`, dir: 'ltr', lang: 'en', class: 'en', oninput: (e) => change(() => { r.fen[j] = e.target.value; }) }, r.fen[j]),
+      stale));
+  });
+
+  if (WRITING) main.append(h('section', { class: 'card writing' }, h('h2', {}, 'نصيحة في الكتابة (لا تؤثر في الدرجة)'),
+    h('label', { class: 'lbl', for: 'wLevel' }, 'مستوى الكتابة'),
+    h('select', { id: 'wLevel', onchange: (e) => change(() => { r.wLevel = e.target.value; }) },
+      Object.entries({ '': '—', ...LEVELS }).map(([v, t]) => h('option', { value: v, selected: r.wLevel === v }, t))),
+    h('label', { class: 'lbl', for: 'wTip' }, 'النصيحة — تظهر للطالب في صفحته'),
+    h('textarea', { id: 'wTip', dir: 'rtl', lang: 'ar', oninput: (e) => change(() => { r.wTip = e.target.value; }) }, r.wTip)));
+  main.append(h('section', { class: 'card' },
+    h('label', { class: 'lbl', for: 'extra' }, 'جملة إضافية في ملخص التغذية الراجعة (اختياري)'),
+    h('textarea', { id: 'extra', dir: 'rtl', lang: 'ar', oninput: (e) => change(() => { r.summaryExtra = e.target.value; }) }, r.summaryExtra)));
+  if (A.rules?.length) main.append(h('section', { class: 'card rules' }, h('details', {},
+    h('summary', {}, `القواعد الحدّية المعتمدة في هذا الاختبار (${A.rules.length})`),
+    h('ol', {}, A.rules.map((x) => h('li', {}, mixed(x)))))));
+  main.append(h('section', { class: 'card preview', id: 'preview' }));
+  renderTotals(); renderPreview();
+  main.scrollTop = 0;
+}
+
+// ---------- scan panel ----------
+let page = 1, zoom = 'fit';
+const img = $('#scanImg'), stage = $('#stage');
+function showPage() {
+  if (!current) return;
+  img.src = `${DATA.images}${current}_p${page}.webp`;
+  img.alt = `الصفحة ${page}`;
+  document.querySelectorAll('[data-page]').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.page === page)));
+  applyZoom();
+}
+function setPage(n) { if (n !== page) { page = n; showPage(); stage.scrollTop = 0; } }
+function applyZoom() {
+  const fit = stage.clientWidth - 16;
+  img.style.width = zoom === 'fit' ? `${fit}px` : `${Math.round(fit * zoom)}px`;
+}
+$('#pageBtns').replaceChildren(...Array.from({ length: PAGES }, (_, i) => h('button', { class: 'btn', 'data-page': i + 1, type: 'button', 'aria-pressed': 'false' }, `صفحة ${i + 1}`)));
+document.querySelectorAll('[data-page]').forEach((b) => b.addEventListener('click', () => { page = +b.dataset.page; showPage(); stage.scrollTop = 0; }));
+$('#zoomIn').addEventListener('click', () => { zoom = (zoom === 'fit' ? 1 : zoom) * 1.4; applyZoom(); });
+$('#zoomOut').addEventListener('click', () => { zoom = Math.max(1, (zoom === 'fit' ? 1 : zoom) / 1.4); applyZoom(); });
+$('#zoomFit').addEventListener('click', () => { zoom = 'fit'; applyZoom(); });
+window.addEventListener('resize', applyZoom);
+stage.addEventListener('dblclick', () => { zoom = zoom === 'fit' ? 2 : 'fit'; applyZoom(); });
+
+// ---------- saving ----------
+function snapshot(markDirty) {
+  return { batch: A.id, savedAt: new Date().toISOString(), dirty: !!markDirty, students: state };
+}
+function setDirty(v, persist = true) {
+  dirty = v;
+  const st = $('#status');
+  st.textContent = v ? 'تعديلات غير محفوظة' : (savedAt ? `محفوظ ${new Date(savedAt).toLocaleTimeString('ar-SA-u-nu-latn', { hour: '2-digit', minute: '2-digit' })}` : 'لا تعديلات');
+  st.classList.toggle('dirty', v);
+  if (persist) try { localStorage.setItem(KEY, JSON.stringify(snapshot(v))); } catch { /* storage blocked */ }
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => { t.hidden = true; }, 3500); }
+
+const IDB = { open: () => new Promise((res, rej) => { const q = indexedDB.open('sec2021-review', 1); q.onupgradeneeded = () => q.result.createObjectStore('h'); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }),
+  async get(k) { const db = await this.open(); return new Promise((res) => { const q = db.transaction('h').objectStore('h').get(k); q.onsuccess = () => res(q.result); q.onerror = () => res(null); }); },
+  async set(k, v) { const db = await this.open(); return new Promise((res) => { const tx = db.transaction('h', 'readwrite'); tx.objectStore('h').put(v, k); tx.oncomplete = res; tx.onerror = res; }); } };
+let fileHandle = null;
+async function save() {
+  const out = snapshot(false); out.dirty = undefined;
+  const text = JSON.stringify(out, null, 2);
+  const name = `${A.id}.review.json`;
+  try {
+    if ('showSaveFilePicker' in window) {
+      if (!fileHandle) fileHandle = await IDB.get(KEY).catch(() => null);
+      if (fileHandle && (await fileHandle.queryPermission({ mode: 'readwrite' })) !== 'granted'
+          && (await fileHandle.requestPermission({ mode: 'readwrite' })) !== 'granted') fileHandle = null;
+      if (!fileHandle) {
+        fileHandle = await showSaveFilePicker({ suggestedName: name, types: [{ description: 'JSON', accept: { 'application/json': ['.json'] } }] });
+        await IDB.set(KEY, fileHandle).catch(() => {});
+      }
+      const w = await fileHandle.createWritable(); await w.write(text); await w.close();
+      savedAt = out.savedAt; setDirty(false); toast(`حُفظ في ${fileHandle.name}`);
+      return;
+    }
+  } catch (e) { if (e.name === 'AbortError') return; console.warn(e); }
+  // fallback: download the file; the teacher puts it in the batch folder
+  const a = h('a', { href: URL.createObjectURL(new Blob([text], { type: 'application/json' })), download: name });
+  document.body.append(a); a.click(); a.remove();
+  savedAt = out.savedAt; setDirty(false); toast(`نُزّل ${name}. ضعه في مجلد الدفعة.`);
+}
+$('#saveBtn').addEventListener('click', save);
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+  if (e.altKey && (e.key === 'ArrowDown' || e.key === 'ArrowUp') && current) {
+    e.preventDefault(); const list = ordered(DATA.students); const i = list.findIndex((x) => x.id === current);
+    open(list[(i + (e.key === 'ArrowDown' ? 1 : -1) + list.length) % list.length].id);
+  }
+});
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+$('#loadBtn').addEventListener('click', () => $('#loadInput').click());
+$('#loadInput').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const n = merge(JSON.parse(await f.text())); setDirty(false); savedAt = new Date().toISOString(); renderList(); if (current) renderMain(); toast(`حُمّلت مراجعة ${n} طالباً من ${f.name}`); }
+  catch { toast('الملف غير صالح.'); }
+  e.target.value = '';
+});
+
+// ---------- filters ----------
+$('#search').addEventListener('input', (e) => { query = e.target.value.trim(); renderList(); });
+document.querySelectorAll('[data-filter]').forEach((b) => b.addEventListener('click', () => {
+  filter = b.dataset.filter; document.querySelectorAll('[data-filter]').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); renderList();
+}));
+$('#sort').addEventListener('change', (e) => { sortBy = e.target.value; renderList(); });
+
+// ---------- start ----------
+$('#title').textContent = `مراجعة التصحيح · ${A.titleAr}`;
+document.title = `مراجعة ${A.titleAr} · SEC2021`;
+setDirty(dirty, false);
+renderList();
+const start = location.hash.slice(1);
+if (byId.has(start)) open(start); else if (DATA.students.length) open(ordered(DATA.students)[0].id);
+</script>
+</body>
+</html>

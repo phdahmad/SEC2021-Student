@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob:; font-src 'self'; connect-src 'self'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#1B4D57">
+<title>SEC2021 · أعمالي</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css?v=2">
+<script type="module" src="app.js?v=2"></script>
+</head>
+<body>
+<a class="skip" href="#main" data-i18n="skip">انتقل إلى المحتوى</a>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-code">SEC2021</span>
+      <span class="brand-sep" aria-hidden="true"></span>
+      <span class="brand-name" data-i18n="brandName">أعمالي</span>
+    </div>
+    <div class="topbar-actions">
+      <button type="button" class="text-btn lang-btn" id="langBtn" data-i18n="langBtn" data-i18n-label="langBtnLabel" aria-label="View this page in English">EN</button>
+      <button type="button" class="icon-btn" id="themeBtn" data-i18n-label="themeBtn" aria-label="التبديل بين الوضع الفاتح والداكن">
+        <svg class="i-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M4.6 4.6l1.6 1.6M17.8 17.8l1.6 1.6M2.5 12h2.2M19.3 12h2.2M4.6 19.4l1.6-1.6M17.8 6.2l1.6-1.6"/></svg>
+        <svg class="i-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>
+      </button>
+      <button type="button" class="text-btn" id="signOutBtn" data-i18n="signOut" hidden>خروج</button>
+    </div>
+  </div>
+</header>
+
+<main id="main" tabindex="-1">
+
+  <!-- Sign in -->
+  <section id="loginView" class="view login" aria-labelledby="loginTitle">
+    <div class="login-card">
+      <p class="eyebrow" data-i18n="eyebrow">مقدمة في الحوسبة والبرمجة</p>
+      <h1 id="loginTitle" data-i18n="loginTitle">أعمالك المصحّحة</h1>
+      <p class="lead" data-i18n="lead">اطّلع على أعمالك المصحّحة والتغذية الراجعة وصور أوراقك.</p>
+
+      <form id="loginForm" novalidate autocomplete="off">
+        <div class="field">
+          <label for="sid" data-i18n="sidLabel">الرقم الجامعي</label>
+          <input id="sid" name="sid" dir="ltr" inputmode="numeric" pattern="[0-9]*" autocomplete="username" spellcheck="false" required>
+        </div>
+        <div class="field">
+          <label for="code" data-i18n="codeLabel">رمز الدخول</label>
+          <input id="code" name="code" dir="ltr" class="mono" autocomplete="current-password" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX" required>
+          <p class="hint" data-i18n="codeHint">أرسل لك أستاذ المقرر هذا الرمز على بريدك الجامعي.</p>
+        </div>
+
+        <div id="loginError" class="alert" role="alert" hidden>
+          <p data-i18n="loginError">الرقم الجامعي أو رمز الدخول غير صحيح.</p>
+        </div>
+        <p id="loginNotice" class="notice" role="status" hidden></p>
+
+        <button type="submit" class="btn-primary" id="loginBtn">
+          <span class="btn-label" data-i18n="openBtn">افتح أعمالي</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="login-help">
+        <p><strong data-i18n="helpPrivateStrong">رمزك خاص بك.</strong> <span data-i18n="helpPrivate">من يعرف رقمك ورمزك يستطيع رؤية أعمالك، فلا تشاركه أحداً.</span></p>
+        <p class="muted" data-i18n="helpLost">فقدت رمزك؟ راسل أستاذ المقرر على بريده.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- All my work -->
+  <section id="homeView" class="view" hidden aria-labelledby="homeTitle"></section>
+
+  <!-- One item -->
+  <section id="itemView" class="view" hidden></section>
+
+</main>
+
+<footer class="footer">
+  <p data-i18n="footerCourse">SEC2021 · مقدمة في الحوسبة والبرمجة · جامعة أم القرى</p>
+  <p class="muted" data-i18n="footerPrivacy">تُفكّ بيانات أعمالك على جهازك وحده، ولا يُحفظ شيء بعد خروجك.</p>
+</footer>
+
+<!-- Scanned page viewer -->
+<div id="viewer" class="viewer" dir="ltr" hidden role="dialog" aria-modal="true" data-i18n-label="viewer" aria-label="Scanned page">
+  <div class="viewer-bar">
+    <span id="viewerCount" class="viewer-count"></span>
+    <button type="button" class="viewer-btn" id="viewerClose" data-i18n-label="close" aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+    </button>
+  </div>
+  <div class="viewer-stage" id="viewerStage">
+    <img id="viewerImg" alt="" draggable="false">
+  </div>
+  <div class="viewer-bar viewer-bottom">
+    <button type="button" class="viewer-btn" id="viewerPrev" data-i18n-label="prev" aria-label="Previous page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+    </button>
+    <button type="button" class="viewer-btn" id="viewerZoomOut" data-i18n-label="zoomOut" aria-label="Zoom out">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+    </button>
+    <span class="viewer-hint" data-i18n="zoomHint">Scroll to move · double-click or pinch to zoom</span>
+    <button type="button" class="viewer-btn" id="viewerZoomIn" data-i18n-label="zoomIn" aria-label="Zoom in">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M12 5v14"/></svg>
+    </button>
+    <button type="button" class="viewer-btn" id="viewerNext" data-i18n-label="next" aria-label="Next page">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+    </button>
+  </div>
+</div>
+</body>
+</html>
