@@ -2,7 +2,7 @@
 // bundle in dist/. Every other bundle stays byte-for-byte unchanged.
 // The old bundle file is deleted, so the old code stops working once you publish.
 //
-// Usage: node tools/reissue.mjs --id 445001734 [--data <dataDir>] [--out dist]
+// Usage: node tools/reissue.mjs --id 900000101 [--data <dataDir>] [--out dist]
 import fs from 'node:fs';
 import path from 'node:path';
 import {

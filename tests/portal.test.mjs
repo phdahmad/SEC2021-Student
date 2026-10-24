@@ -45,7 +45,7 @@ test('access codes: 12 characters, no ambiguous characters, unbiased alphabet', 
   assert.equal(seen.size, 2000);
   assert.equal(normalizeToken('k7qm-4xrt 9hzp'), 'K7QM4XRT9HZP');
   assert.equal(normalizeToken('K7QM-4XRT-9HZ0'), null);       // 0 is not allowed
-  assert.equal(normalizeId('٤٤٥٠٠١٧٣٤'), '445001734');          // Arabic-keyboard digits
+  assert.equal(normalizeId('٩٠٠٠٠٠١٠١'), '900000101');          // Arabic-keyboard digits
 });
 
 test('each student sees only their own data', async () => {
