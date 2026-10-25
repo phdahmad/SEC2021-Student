@@ -198,6 +198,7 @@ for sheet in range(1,4):
         d.rectangle((100,100+sheet*200,600+n*100,400+sheet*200),fill=0); pages.append(im)
     pages.append(Image.new('L',(1240,1754),255 if ${blankBetween} else 0))
 sig=Image.new('L',(1240,1754),255); ImageDraw.Draw(sig).rectangle((100,100,1100,600),fill=0); pages.append(sig)
+pages=[p.convert('1') for p in pages]
 pages[0].save(sys.argv[1],save_all=True,append_images=pages[1:])
 `, out], { encoding: 'utf8' });
   const pdf = path.join(src, 'Q1_scan.pdf');

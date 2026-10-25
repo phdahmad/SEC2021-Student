@@ -64,7 +64,7 @@ if pages != expected:
 
 tmp = tempfile.mkdtemp(prefix='scan-')
 try:
-    subprocess.run(['pdfimages', '-all', pdf, os.path.join(tmp, 'img')], check=True)
+    subprocess.run(['pdfimages', '-j', '-jp2', '-png', pdf, os.path.join(tmp, 'img')], check=True)
     lst = subprocess.run(['pdfimages', '-list', pdf], capture_output=True, text=True, check=True).stdout.splitlines()[2:]
     per_page = {}
     files = sorted(glob.glob(os.path.join(tmp, 'img-*')))
