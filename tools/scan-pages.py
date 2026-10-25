@@ -10,15 +10,18 @@ Writes  batches/<ID>/web/<university ID>_p<n>.webp  (width 1400, WebP quality 62
 Layout of the scan: sheet k (1-based) starts at page (k-1)*stride + 1 and has per-sheet pages.
 Pages between sheets (stride > per-sheet) and the last --extra pages (signature sheet, blank)
 are not used. Every used page must carry ink, and every skipped page between sheets must be
-blank; otherwise nothing is written (use --force only after looking at the pages yourself).
-Images come straight from the scanner's image in the PDF (pdfimages), colour kept when the
-scan is in colour. Prints sheet numbers and masked IDs only.
+blank (under 0.5% dark pixels: show-through from the back of the sheet is allowed); otherwise
+nothing is written (use --force only after looking at the pages yourself).
+A page that holds one scanned image is taken straight from it (pdfimages). A page made of many
+image strips (e.g. re-printed with "Microsoft Print to PDF") is rendered at 300 dpi (pdftoppm)
+so its true page geometry is kept. Colour is kept when the scan is in colour.
+Prints sheet numbers and masked IDs only.
 """
 import argparse, glob, json, os, shutil, subprocess, sys, tempfile
 from PIL import Image
 
 WIDTH, QUALITY = 1400, 62
-BLANK, INKED = 0.004, 0.01   # share of dark pixels: below BLANK = blank page, above INKED = written page
+BLANK, INKED = 0.005, 0.01   # share of dark pixels: below BLANK = blank page, above INKED = written page
 
 ap = argparse.ArgumentParser()
 ap.add_argument('--batch', required=True)
@@ -64,17 +67,26 @@ if pages != expected:
 
 tmp = tempfile.mkdtemp(prefix='scan-')
 try:
-    subprocess.run(['pdfimages', '-j', '-jp2', '-png', pdf, os.path.join(tmp, 'img')], check=True)
     lst = subprocess.run(['pdfimages', '-list', pdf], capture_output=True, text=True, check=True).stdout.splitlines()[2:]
-    per_page = {}
-    files = sorted(glob.glob(os.path.join(tmp, 'img-*')))
-    for row, f in zip(lst, files):
-        p = int(row.split()[0]); per_page.setdefault(p, []).append(f)
-    if sorted(per_page) != list(range(1, pages + 1)) or any(len(v) != 1 for v in per_page.values()):
-        fail('each page must hold exactly one scanned image')
+    count = {}
+    for row in lst:
+        p = int(row.split()[0]); count[p] = count.get(p, 0) + 1
+    if sorted(count) != list(range(1, pages + 1)): fail('some pages hold no scanned image')
+    strips = sum(1 for p in count if count[p] > 1)
+
+    def source(p):
+        """The page as an image file: the scanner's own image, or a 300 dpi rendering of the page."""
+        d = os.path.join(tmp, f'p{p}'); os.makedirs(d)
+        if count[p] == 1:
+            subprocess.run(['pdfimages', '-j', '-jp2', '-png', '-f', str(p), '-l', str(p), pdf, os.path.join(d, 'img')], check=True)
+        else:
+            subprocess.run(['pdftoppm', '-r', '300', '-png', '-f', str(p), '-l', str(p), pdf, os.path.join(d, 'pg')], check=True)
+        files = glob.glob(os.path.join(d, '*'))
+        if len(files) != 1: fail(f'page {p}: expected one image, got {len(files)}')
+        return files[0]
 
     def load(p):
-        im = Image.open(per_page[p][0])
+        im = Image.open(source(p))
         im.load()
         if im.mode in ('1', 'L', 'LA', 'I;16', 'P') and not (im.mode == 'P' and 'transparency' in im.info):
             im = im.convert('L')
@@ -87,7 +99,7 @@ try:
         ink = sum(hist[:128]) / (g.width * g.height)
         return im, ink
 
-    used, problems, out = {}, [], []
+    used, problems, out, gaps = {}, [], [], []
     for pos in range(1, sheets + 1):
         start = (pos - 1) * stride + 1
         for k in range(a.per_sheet):
@@ -97,19 +109,24 @@ try:
         if p in used:
             pos, n = used[p]
             if ink < INKED: problems.append(f'page {p} (sheet {pos}, page {n}) looks blank ({ink:.4f})')
-            out.append((by_pos[pos]['id'], n, im))
+            f = os.path.join(tmp, f'out-{p}.webp')
+            im.save(f, 'WEBP', quality=QUALITY, method=6)   # written to the batch only if every check passes
+            out.append((by_pos[pos]['id'], n, f, im.mode))
         elif p <= sheets * stride:
+            gaps.append(f'{p}:{ink:.2%}')
             if ink > BLANK: problems.append(f'page {p} between sheets is not blank ({ink:.4f})')
     if problems and not a.force:
         fail('\n  ' + '\n  '.join(problems) + '\nNothing written. Look at these pages; use --force if the layout is right.')
     web = os.path.join(bdir, 'web'); os.makedirs(web, exist_ok=True)
-    for sid, n, im in out:
-        im.save(os.path.join(web, f'{sid}_p{n}.webp'), 'WEBP', quality=QUALITY, method=6)
-    mode = 'colour' if any(im.mode == 'RGB' for _, _, im in out) else 'grey'
-    print(f'{a.batch}: {len(out)} page images ({sheets} sheets × {a.per_sheet}, {mode}) from {pages} scanned pages.')
+    for sid, n, f, _ in out:
+        shutil.copyfile(f, os.path.join(web, f'{sid}_p{n}.webp'))
+    mode = 'colour' if any(m == 'RGB' for *_, m in out) else 'grey'
+    how = f', {strips} pages rendered from image strips' if strips else ''
+    print(f'{a.batch}: {len(out)} page images ({sheets} sheets × {a.per_sheet}, {mode}{how}) from {pages} scanned pages.')
     for pos in range(1, sheets + 1):
         d = by_pos[pos]; s = (pos - 1) * stride + 1
         print(f'  sheet {pos:>2} pages {s}–{s + a.per_sheet - 1} → {mask(d["id"])} (serial {d["serial"]})')
+    if gaps: print('  dark pixels on the pages between sheets:', ' '.join(gaps))
     for w in problems: print('  warning:', w)
 finally:
     shutil.rmtree(tmp, ignore_errors=True)
