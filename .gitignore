@@ -27,3 +27,5 @@ node_modules/
 .DS_Store
 Thumbs.db
 desktop.ini
+__pycache__/
+*.pyc
