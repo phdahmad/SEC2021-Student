@@ -177,7 +177,7 @@ if (batch === 'MID') {
   }
 
   assessment = {
-    id: 'MID', title: C.title, titleAr: C.titleAr, max: 40, weight: C.weight, date: C.date ?? null,
+    id: 'MID', title: C.title, titleAr: C.titleAr, max: 40, letters: C.letters ?? 'ar', weight: C.weight, date: C.date ?? null,
     pages: C.pages, startPage: 1, objectiveTitleAr: C.objectiveTitleAr,
     rules: rulesFrom(ew).length ? rulesFrom(ew) : rulesFrom(gb),
     versions: { A: {
@@ -208,7 +208,7 @@ if (batch === 'MID') {
     excelTotal.set(id, { total: [...mcq].filter((a, i) => a === key[i]).length, partsDiffer: [] });
   }
   assessment = {
-    id: batch, title: C.title, titleAr: C.titleAr, max: 10, weight: C.weight, date: C.date ?? null, pages: C.pages ?? 2, startPage: 1,
+    id: batch, title: C.title, titleAr: C.titleAr, max: 10, letters: C.letters ?? 'ar', weight: C.weight, date: C.date ?? null, pages: C.pages ?? 2, startPage: 1,
     rules: rulesFrom(gb).filter((x) => C.rulesFilter ? x.includes(C.rulesFilter) : false),
     versions: { A: { objective: C.items.map((o, i) => ({ q: i + 1, key: key[i], topicAr: o.topicAr, whyAr: o.whyAr ?? '', page: o.page ?? 1 })), short: [] } },
   };

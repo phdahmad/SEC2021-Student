@@ -36,6 +36,7 @@ Fonts: Inter, Crimson Pro, JetBrains Mono and Tajawal (Arabic) under the SIL Ope
 | `node tools/results-from-review.mjs --batch <ID> [--approve "..."]` | Builds `results/<ID>.json` from the draft + saved review and lists the differences |
 | `node tools/review-hub.mjs` | Writes `review/index.html` (one card per batch) in the data folder |
 | `node tools/import-xlsx.mjs --roster` | Writes `roster.csv` from the marking workbook (never overwrites) |
+| `python tools/scan-pages.py --batch MID --per-sheet 5 --stride 6 --extra 2` | Page images (`web/<ID>_p<n>.webp`, width 1400) from the scan PDF, placed by each student's scan position; checks blank and written pages |
 | `node tools/import-xlsx.mjs --batch MID` (or `Q1`, `Q2`) | Imports marks already graded in Excel into `<ID>.draft.json`, matched by university ID, and compares every total with the workbook |
 
 The importer reads `gradebook.json` (where the workbooks are) and `batches/<ID>/content.json`

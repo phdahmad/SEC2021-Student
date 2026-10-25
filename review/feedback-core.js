@@ -24,8 +24,16 @@ export function totalOf(r) {
   return Math.round((sumMarks(r.obj) + r.sq.reduce((t, q) => t + sumMarks(q), 0)) * 100) / 100;
 }
 
+// How an answer is written for the student: صح/خطأ for true/false, and the Arabic
+// letters printed on the paper (أ ب ج د) when the assessment says letters: 'ar'.
 const AR_WORD = { T: 'صح', F: 'خطأ' };
-const shown = (x) => AR_WORD[x] ?? x;
+const AR_LETTER = { A: 'أ', B: 'ب', C: 'ج', D: 'د' };
+export function shownAnswer(x, A) {
+  if (x === '-' || x === undefined || x === null || x === '') return '—';
+  if (AR_WORD[x]) return AR_WORD[x];
+  if (A?.letters === 'ar' && AR_LETTER[x]) return AR_LETTER[x];
+  return x;
+}
 
 export function buildFeedback(A, s, r) {
   const V = A.versions[s.v];
@@ -43,12 +51,12 @@ export function buildFeedback(A, s, r) {
     if (got === max) return;
     const a = (s.ans ?? '')[i];
     let text;
-    if (a === o.key && o.half) text = `حكمك صحيح (${shown(a)})، لكن التصحيح ناقص أو غير صحيح، فأخذت ${fmtMark(got)} من ${fmtMark(max)}.`;
+    if (a === o.key && o.half) text = `حكمك صحيح (${shownAnswer(a, A)})، لكن التصحيح ناقص أو غير صحيح، فأخذت ${fmtMark(got)} من ${fmtMark(max)}.`;
     else if (got > 0) text = `أخذت ${fmtMark(got)} من ${fmtMark(max)} في هذه الفقرة.`;
     else if (a === o.key) text = `أخذت ${fmtMark(got)} من ${fmtMark(max)} في هذه الفقرة.`;
     else if (a === '-' || a === undefined) text = 'تركت هذه الفقرة دون إجابة.';
     else if (a === 'X') text = 'اخترت إجابتين، فلا تُحتسب الفقرة.';
-    else text = `اخترت ${shown(a)}، والإجابة الصحيحة ${shown(o.key)}.`;
+    else text = `اخترت ${shownAnswer(a, A)}، والإجابة الصحيحة ${shownAnswer(o.key, A)}.`;
     if (o.whyAr) text += ' ' + o.whyAr;
     const pt = { ref: `الفقرة ${objLabel(o)} · ${o.topicAr ?? o.topic ?? ''}`.replace(/ · $/, ''), text };
     if (o.whyEn) pt.textEn = o.whyEn;

@@ -406,8 +406,7 @@ function renderMain() {
     const steps = o.half ? [0, max / 2, max] : [0, max];
     const seg = h('span', { class: 'seg' }, steps.map((v) => h('button', { type: 'button', 'aria-pressed': +r.obj[i] === v ? 'true' : 'false',
       'aria-label': `الفقرة ${objLabel(o)}: ${fmt(v)}`, onclick: () => change(() => { r.obj[i] = v; renderMain(); }) }, fmt(v))));
-    const shownA = a === '-' || a === undefined ? '—' : a === 'T' ? 'صح' : a === 'F' ? 'خطأ' : a;
-    const shownK = o.key === 'T' ? 'صح' : o.key === 'F' ? 'خطأ' : o.key;
+    const shownA = shownAnswer(a, A), shownK = shownAnswer(o.key, A);
     return h('tr', { class: flagged ? 'flagged' : null, onclick: () => setPage(o.page ?? 1) },
       h('td', {}, h('b', {}, objLabel(o))),
       h('td', { class: 'topic' }, topic(o)),

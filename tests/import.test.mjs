@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { writeXlsx } from './xlsx-writer.mjs';
 import { readXlsx } from '../tools/xlsx.mjs';
 import { readCsv } from '../tools/lib.mjs';
-import { totalOf, objMax } from '../review/feedback-core.js';
+import { totalOf, objMax, buildFeedback } from '../review/feedback-core.js';
 import { FAKE as ALL } from './fixture.mjs';
 
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -131,6 +131,10 @@ test('import: roster, then midterm totals match the workbook, matched by ID not 
   assert.equal(draft[0].short[0].fb.ar, 'إجابتك كاملة.');
   assert.ok(d2.flags.some((f) => f.includes('تأخر')), 'the gradebook note becomes a teacher flag');
   assert.ok(draft[2].flags.some((f) => f.startsWith('3-1')), 'content.json flags are attached');
+  assert.equal(A.letters, 'ar');
+  const d3 = draft[2], obj3 = A.versions.A.objective.map((o, i) => d3.objMarks[i]);
+  const fb3 = buildFeedback(A, { ...d3, ans: d3.mcq + d3.tf }, { obj: obj3, sq: d3.short.map((q) => q.marks), far: [], fen: [] });
+  assert.ok(fb3.points.some((p) => p.text.startsWith('اخترت ب، والإجابة الصحيحة أ.')), 'answers are shown with the Arabic letters printed on the paper');
 
   // the review page accepts the imported draft
   for (const d of draft) fs.writeFileSync(path.join(dir, 'web', `${d.id}_p1.webp`), 'x');
@@ -171,4 +175,50 @@ test('import: missing feedback for a deducted part stops the import', () => {
   assert.equal(r.status, 1);
   assert.match(r.stderr, /no student feedback/);
   assert.ok(!fs.existsSync(path.join(data, 'batches', 'MID', 'MID.draft.json')), 'nothing written on failure');
+});
+
+// Fake scan: sheets of 2 pages with a blank page after each, then a signature page.
+// Needs python3 + Pillow + poppler (pdfimages); skipped where they are missing.
+const hasPy = spawnSync('python3', ['-c', 'import PIL'], { encoding: 'utf8' }).status === 0
+  && spawnSync('pdfimages', ['-v'], { encoding: 'utf8' }).status === 0;
+test('scan pages: one image per page, mapped by scan position, blanks checked', { skip: !hasPy && 'python3/Pillow/pdfimages not available' }, () => {
+  const data = setup();
+  run(['tools/import-xlsx.mjs', '--roster', '--data', data]);
+  assert.equal(run(['tools/import-xlsx.mjs', '--batch', 'Q1', '--data', data]).status, 0);
+  const src = path.join(data, 'batches', 'Q1', 'source');
+  fs.mkdirSync(src, { recursive: true });
+  // page k carries the text "S<sheet>P<page>" as a block of ink; blank pages are white
+  const make = (blankBetween, out) => spawnSync('python3', ['-c', `
+import sys
+from PIL import Image, ImageDraw
+pages=[]
+for sheet in range(1,4):
+    for n in range(1,3):
+        im=Image.new('L',(1240,1754),255); d=ImageDraw.Draw(im)
+        d.rectangle((100,100+sheet*200,600+n*100,400+sheet*200),fill=0); pages.append(im)
+    pages.append(Image.new('L',(1240,1754),255 if ${blankBetween} else 0))
+sig=Image.new('L',(1240,1754),255); ImageDraw.Draw(sig).rectangle((100,100,1100,600),fill=0); pages.append(sig)
+pages[0].save(sys.argv[1],save_all=True,append_images=pages[1:])
+`, out], { encoding: 'utf8' });
+  const pdf = path.join(src, 'Q1_scan.pdf');
+  assert.equal(make('True', pdf).status, 0);
+  const py = (args) => spawnSync('python3', ['tools/scan-pages.py', ...args], { cwd: REPO, encoding: 'utf8' });
+  let r = py(['--batch', 'Q1', '--data', data, '--per-sheet', '2', '--stride', '3']);
+  assert.equal(r.status, 1, 'the page count is checked'); assert.match(r.stderr, /expected 3 sheets/);
+  r = py(['--batch', 'Q1', '--data', data, '--per-sheet', '2', '--stride', '3', '--extra', '1']);
+  assert.equal(r.status, 0, r.stderr);
+  for (const s of S) assert.ok(!r.stdout.includes(s.id), 'output shows masked IDs only');
+  const web = path.join(data, 'batches', 'Q1', 'web');
+  const draft = JSON.parse(fs.readFileSync(path.join(data, 'batches', 'Q1', 'Q1.draft.json'), 'utf8'));
+  for (const d of draft) for (const n of [1, 2]) assert.ok(fs.existsSync(path.join(web, `${d.id}_p${n}.webp`)));
+  // the sheet at scan position 1 is student 1 (fixture: quiz position = serial); its first page has the sheet-1 mark
+  const size = (f) => spawnSync('python3', ['-c', 'import sys;from PIL import Image;im=Image.open(sys.argv[1]).convert("L");print(im.width, sum(im.histogram()[:128]))', f], { encoding: 'utf8' }).stdout.trim();
+  const [w] = size(path.join(web, `${draft[0].id}_p1.webp`)).split(' ');
+  assert.equal(w, '1400');
+  // a dark page where a blank one should be stops everything
+  fs.rmSync(web, { recursive: true });
+  assert.equal(make('False', pdf).status, 0);
+  r = py(['--batch', 'Q1', '--data', data, '--per-sheet', '2', '--stride', '3', '--extra', '1']);
+  assert.equal(r.status, 1); assert.match(r.stderr, /not blank/);
+  assert.ok(!fs.existsSync(web) || fs.readdirSync(web).length === 0, 'nothing written');
 });
