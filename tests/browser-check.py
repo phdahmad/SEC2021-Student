@@ -5,7 +5,7 @@ no horizontal scroll (scrollWidth equals the window width), and saves screenshot
 
 Usage: python tests/browser-check.py <dist> <tokens.csv> <shots-dir>
 """
-import csv, json, sys, threading, functools, http.server, os
+import csv, json, re, sys, threading, functools, http.server, os
 from playwright.sync_api import sync_playwright
 
 dist, tokens_csv, shots = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -61,7 +61,15 @@ with sync_playwright() as p:
             page.screenshot(path=f'{shots}/{tag}-{scheme}-3-home.png', full_page=True)
             page.click('.item-btn:has-text("%s")' % ('الاختبار النصفي' if lang == 'ar' else 'Midterm exam'))
             page.wait_for_selector('.page-thumb img')
-            ok('16.5' in page.inner_text('.score-box') or '17' in page.inner_text('.score-box'), f'{tag}/{scheme}: raw and scaled marks shown')
+            sb = page.inner_text('.score-box')
+            ok(re.search(r'\d+(\.\d+)? / 40', sb) and '20%' in sb, f'{tag}/{scheme}: raw and scaled marks shown ({sb!r})')
+            # the Office promise: per question before/after, total row, and the share of the course grade
+            adj = page.locator('section.adj')
+            ok(adj.count() == 1 and adj.locator('tbody tr').count() == 3 and adj.locator('tfoot tr').count() == 1,
+               f'{tag}/{scheme}: Office promise table shown (3 questions + total)')
+            after = adj.locator('tfoot td').nth(1).inner_text().strip()
+            ok(after in sb, f'{tag}/{scheme}: score box shows the mark after the promise ({after})')
+            ok('20%' in adj.inner_text(), f'{tag}/{scheme}: promise shows the course share before and after')
             page.wait_for_timeout(300)
             ok(page.evaluate('document.documentElement.scrollWidth === window.innerWidth'), f'{tag}/{scheme}: no horizontal scroll (item)')
             page.screenshot(path=f'{shots}/{tag}-{scheme}-4-item.png', full_page=True)

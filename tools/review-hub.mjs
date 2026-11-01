@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { dataDir, readCsv } from './lib.mjs';
-import { objDefault } from '../review/feedback-core.js';
+import { objDefault, scoreOf } from '../review/feedback-core.js';
 
 const readJson = (p) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch { return null; } };
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -24,9 +24,8 @@ const day = (iso) => (iso ? new Date(iso).toLocaleString('ar-SA-u-nu-latn-ca-gre
 function draftScore(A, d) {
   const V = A.versions?.[d.v]; if (!V) return null;
   const s = { ...d, ans: (d.mcq ?? '') + (d.tf ?? '') };
-  const obj = (V.objective ?? []).reduce((t, o, i) => t + objDefault(o, i, s), 0);
-  const sh = (d.short ?? []).map((q) => q.marks ?? []);
-  return obj + sh.flat().reduce((t, x) => t + (+x || 0), 0);
+  const r = { obj: (V.objective ?? []).map((o, i) => objDefault(o, i, s)), sq: (d.short ?? []).map((q) => q.marks ?? []) };
+  return scoreOf(A, s, r);   // the score that counts, with any grant applied
 }
 
 export function collect(DATA) {

@@ -15,7 +15,7 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { writeHub } from './review-hub.mjs';
 import { dataDir, argValue, readCsv, fail } from './lib.mjs';
-import { buildFeedback, objDefault, objMax, objLabel, totalOf, sumMarks, fmtMark } from '../review/feedback-core.js';
+import { buildFeedback, objDefault, objMax, objLabel, totalOf, scoreOf, sumMarks, fmtMark } from '../review/feedback-core.js';
 
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
 
@@ -66,14 +66,15 @@ export function resultsFromReview(DATA, batch, approval) {
       if (r.sq[j].length !== q.parts.length) fail(`${d.id}: question ${q.labelAr ?? q.q} has ${r.sq[j].length} marks, expected ${q.parts.length}`);
       q.parts.forEach((p, k) => { if (r.sq[j][k] < 0 || r.sq[j][k] > p.max) fail(`${d.id}: ${p.label} mark ${r.sq[j][k]} is outside 0–${p.max}`); });
     });
-    const score = totalOf(r);
+    const sheet = { ...d, ans: (d.mcq ?? '') + (d.tf ?? '') };
+    const score = scoreOf(A, sheet, r);   // with any grant (e.g. Office items in full) applied
     if (score > A.max) fail(`${d.id}: score ${score} is above the maximum ${A.max}`);
-    const feedback = buildFeedback(A, { ...d, ans: (d.mcq ?? '') + (d.tf ?? '') }, r);
+    const feedback = buildFeedback(A, sheet, r);
     const pages = Array.from({ length: A.pages ?? 3 }, (_, i) => `batches/${batch}/web/${d.id}_p${i + 1}.webp`);
     for (const p of pages) if (!fs.existsSync(path.join(DATA, p))) fail(`${d.id}: missing ${p}`);
     students[d.id] = { status: 'graded', score, feedback, pages };
     const changes = diffOf(A, d, base, r);
-    if (changes.length) diffs.push({ id: d.id, serial: d.serial ?? null, before: totalOf(base), after: score, changes });
+    if (changes.length) diffs.push({ id: d.id, serial: d.serial ?? null, before: scoreOf(A, sheet, base), after: score, changes });
   }
   // Absent students (in the roster, no sheet) are recorded as not submitted.
   for (const id of A.absent ?? []) if (!students[id]) students[id] = { status: 'not_submitted' };

@@ -21,7 +21,7 @@ import path from 'node:path';
 import { readXlsx } from './xlsx.mjs';
 import { writeHub } from './review-hub.mjs';
 import { dataDir, argValue, readCsv, writeCsv, writeJson, fail } from './lib.mjs';
-import { objMax, totalOf } from '../review/feedback-core.js';
+import { objMax, totalOf, scoreOf, adjustmentsOf } from '../review/feedback-core.js';
 
 const DATA = dataDir();
 const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -214,6 +214,13 @@ if (batch === 'MID') {
   };
 } else fail(`Unknown batch ${batch}`);
 
+// marks given in full to every student (e.g. the Office items), from content.json
+if (C.grants) {
+  assessment.grants = C.grants;
+  const s0 = draft[0];
+  try { adjustmentsOf(assessment, s0, { obj: assessment.versions.A.objective.map(() => 0), sq: assessment.versions.A.short.map((q) => q.parts.map(() => 0)) }); }
+  catch (e) { fail(`content.json grants: ${e.message}`); }
+}
 // absent: in the roster, no row in the workbook
 assessment.absent = roster.filter((s) => !draft.some((d) => d.id === s.id)).map((s) => s.id);
 draft.sort((a, b) => a.serial - b.serial);
@@ -225,12 +232,14 @@ const V = assessment.versions.A;
 const rows = draft.map((d) => {
   const r = { obj: (V.objective ?? []).map((o, i) => (d.objMarks ? d.objMarks[i] : ((d.mcq ?? '') + (d.tf ?? ''))[i] === o.key ? objMax(o) : 0)), sq: d.short.map((q) => q.marks) };
   const mine = totalOf(r), ex = excelTotal.get(d.id);
-  return { serial: d.serial, scan: d.scan, id: d.id, name: byId.get(d.id).name, excel: ex.total, draft: mine, match: ex.total === mine && !ex.partsDiffer.length ? 'نعم' : 'لا', partsDiffer: ex.partsDiffer.join(' ') };
+  const credited = scoreOf(assessment, { ...d, ans: (d.mcq ?? '') + (d.tf ?? '') }, r);
+  return { serial: d.serial, scan: d.scan, id: d.id, name: byId.get(d.id).name, excel: ex.total, draft: mine, credited, match: ex.total === mine && !ex.partsDiffer.length ? 'نعم' : 'لا', partsDiffer: ex.partsDiffer.join(' ') };
 });
-writeCsv(path.join(dir, 'import-report.csv'), rows, ['serial', 'scan', 'id', 'name', 'excel', 'draft', 'match', 'partsDiffer']);
+const G = !!assessment.grants?.length;
+writeCsv(path.join(dir, 'import-report.csv'), rows, ['serial', 'scan', 'id', 'name', 'excel', 'draft', ...(G ? ['credited'] : []), 'match', 'partsDiffer']);
 console.log(`${batch}: ${draft.length} sheets imported, ${assessment.absent.length} absent.`);
-console.log('serial  sheet-in-scan  id     Excel  draft  match');
-for (const x of rows) console.log(`${String(x.serial).padStart(4)}  ${String(x.scan ?? '-').padStart(6)}        ${mask(x.id)}  ${String(x.excel).padStart(5)}  ${String(x.draft).padStart(5)}  ${x.match === 'نعم' ? 'yes' : 'NO ' + x.partsDiffer}`);
+console.log(`serial  sheet-in-scan  id     Excel  draft  match${G ? '   with grants' : ''}`);
+for (const x of rows) console.log(`${String(x.serial).padStart(4)}  ${String(x.scan ?? '-').padStart(6)}        ${mask(x.id)}  ${String(x.excel).padStart(5)}  ${String(x.draft).padStart(5)}  ${x.match === 'نعم' ? 'yes' : 'NO ' + x.partsDiffer}${G ? '   ' + String(x.credited).padStart(5) : ''}`);
 const bad = rows.filter((x) => x.match !== 'نعم');
 console.log(bad.length ? `\n${bad.length} student(s) differ — see import-report.csv.` : '\nAll totals match the workbook.');
 writeHub(DATA);

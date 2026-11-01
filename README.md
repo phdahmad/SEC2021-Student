@@ -51,3 +51,13 @@ The feedback text is built by `review/feedback-core.js`, shared by the review pa
 - `node tests/demo.mjs <empty dir>` — a full fake demo (nine fake students, real-strength build).
 - `python tests/browser-check.py <dist> <tokens.csv> <shots>` — student page, Arabic/English, light/dark, 360/1280 px.
 - `python tests/review-check.py <data> <shots>` — hub and review pages from `file://`.
+
+## Marks given in full to everyone (grants)
+
+A promise such as «the Office items count in full for every student» goes in the batch's
+`content.json` as `grants`: `[{ id, titleAr, headingAr, noteAr, groups: [{ labelAr, items: ['1-13', '3-3', '4-ب', …] }] }]`
+(items are objective labels or essay part labels; `Q4:ب` when part labels repeat).
+The review page keeps the marks the sheet earned and tags granted items «كاملة للجميع»; the score
+that counts has the grant applied. The student sees a card with each group's marks before and
+after, the total before and after, and the share of the course grade before and after.
+

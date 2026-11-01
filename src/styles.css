@@ -290,3 +290,15 @@ input[dir="ltr"] { text-align: left; }
 
 .pt-ar { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); text-align: start; unicode-bidi: plaintext; }
 .pt-en { display: block; margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--line); color: var(--muted); font-size: .94em; direction: ltr; text-align: left; }
+
+/* marks given in full to everyone: before / after per question */
+.adj { border-inline-start: 4px solid var(--ok-ink); margin-top: 14px; }
+.adj-wrap { overflow-x: auto; margin-top: 10px; }
+.adj-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.adj-table th, .adj-table td { padding: 8px 10px; border-bottom: 1px solid var(--line); text-align: start; }
+.adj-table thead th { font-size: .85rem; color: var(--muted); font-weight: 600; }
+.adj-table td, .adj-table thead th:not(:first-child) { width: 1%; white-space: nowrap; text-align: center; padding-inline: 12px; }
+.adj-table tbody th { font-weight: 500; }
+.adj-table tr.up td:nth-of-type(2) { color: var(--ok-ink); font-weight: 700; }
+.adj-table tfoot th, .adj-table tfoot td { font-weight: 700; border-bottom: 0; }
+.adj-table tfoot td:nth-of-type(2) { color: var(--ok-ink); }

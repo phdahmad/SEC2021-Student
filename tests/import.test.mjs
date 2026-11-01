@@ -70,6 +70,9 @@ function makeContent() {
         parts: [['4-أ', 4], ['4-ب', 3], ['4-ج', 3]].map(([label, max]) => ({ label, max, topicAr: 'فرع' })) },
     ],
     feedback, flags: { [`3-1|${SCAN[2]}`]: 'راجع هذا الفرع' },
+    grants: [{ id: 'office', titleAr: 'أسئلة الأوفيس', groups: [
+      { labelAr: 'السؤال الأول', items: ['1-13', '1-14', '1-15', '1-16'] }, { labelAr: 'السؤال الثاني', items: ['2-5', '2-6'] },
+      { labelAr: 'السؤال الثالث', items: ['3-3', '3-4'] }, { labelAr: 'السؤال الرابع', items: ['4-ب', '4-ج'] }] }],
   };
 }
 
@@ -136,6 +139,13 @@ test('import: roster, then midterm totals match the workbook, matched by ID not 
   const fb3 = buildFeedback(A, { ...d3, ans: d3.mcq + d3.tf }, { obj: obj3, sq: d3.short.map((q) => q.marks), far: [], fen: [] });
   assert.ok(fb3.points.some((p) => p.text.startsWith('اخترت ب، والإجابة الصحيحة أ.')), 'answers are shown with the Arabic letters printed on the paper');
 
+  // grants: carried into the batch; the report shows the score with the Office items in full
+  assert.equal(A.grants.length, 1);
+  const rep = readCsv(path.join(dir, 'import-report.csv'));
+  const office = (k) => { const st = STUDENTS[k], e = finalEssay(k);
+    return [12, 13, 14, 15].reduce((t, i) => t + 1 - ((st.mcq[i] === 'أ' ? 'A' : st.mcq[i]) === KEY[i] ? 1 : 0), 0)
+      + (1 - st.q2[4]) + (1 - st.q2[5]) + (2 - e[2]) + (2 - e[3]) + (3 - e[5]) + (3 - e[6]); };
+  rep.forEach((x, k) => assert.equal(Number(x.credited), expected[k] + office(k), `credited, student ${k + 1}`));
   // the review page accepts the imported draft
   for (const d of draft) fs.writeFileSync(path.join(dir, 'web', `${d.id}_p1.webp`), 'x');
   r = run(['tools/review-page.mjs', '--batch', 'MID', '--data', data]);

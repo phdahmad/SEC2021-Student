@@ -81,6 +81,11 @@ button, input, textarea, select { font: inherit; color: inherit; }
 .tag.flag { background: var(--flag-bg); color: var(--accent-ink); border: 1px solid var(--flag-line); }
 .tag.done { background: var(--ok-bg); color: var(--ok-ink); }
 .tag.edit { background: var(--edit-bg); color: var(--edit-ink); }
+.tag.grant { background: var(--ok-bg); color: var(--ok-ink); white-space: nowrap; margin-inline-start: 4px; }
+.adj-prev { margin-top: 14px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.adj-prev table { border-collapse: collapse; width: 100%; margin-top: 6px; font-variant-numeric: tabular-nums; }
+.adj-prev th, .adj-prev td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: start; }
+.adj-prev tr.sum td { font-weight: 700; border-bottom: 0; }
 
 /* main */
 .main { overflow-y: auto; padding: 16px; min-height: 0; }
@@ -291,7 +296,11 @@ try {
 
 // ---------- scoring ----------
 const round = (v, step) => Math.round(Math.round(v / step) * step * 100) / 100;
-const total = (id) => totalOf(state[id]);
+const total = (id) => scoreOf(A, byId.get(id), state[id]);   // the score that counts (grants applied)
+const earned = (id) => totalOf(state[id]);                     // what the sheet earned
+const GRANTED = new Set((A.grants ?? []).flatMap((g) => g.groups.flatMap((x) => x.items)));
+const GRANT_NAME = (A.grants ?? []).map((g) => g.titleAr).join(' و');
+const grantTag = (label) => (GRANTED.has(String(label)) ? h('span', { class: 'tag grant', title: 'تُحتسب كاملة لجميع الطلبة' }, 'كاملة للجميع') : null);
 function isEdited(id) {
   const d = defaults(byId.get(id)), r = state[id];
   return r.obj.some((v, i) => +v !== +d.obj[i])
@@ -353,7 +362,8 @@ function change(fn) { fn(); setDirty(true); renderList(); renderTotals(); render
 function renderTotals() {
   const t = total(current);
   $('#tot').textContent = `${fmt(t)} / ${A.max}`;
-  $('#scaled').replaceChildren(...mixed(scaledText(t)));
+  const e = earned(current);
+  $('#scaled').replaceChildren(...mixed(scaledText(t) + (GRANTED.size ? ` · قبل احتساب ${GRANT_NAME}: ${fmt(e)}` : '')));
   document.querySelectorAll('[data-qtotal]').forEach((el) => {
     const j = +el.dataset.qtotal;
     el.textContent = `${fmt(sum(state[current].sq[j]))} / ${fmt(sum(SHORT(byId.get(current))[j].parts.map((p) => p.max)))}`;
@@ -369,7 +379,13 @@ function renderPreview() {
     h('ul', {}, fb.points.map((p) => h('li', {}, ar('span', { class: 'ref' }, p.ref), ar('span', {}, p.text),
       p.textEn ? en('p', { class: 'en-fb' }, p.textEn) : null))),
     fb.writing ? h('div', { class: 'writing-prev' }, h('h3', {}, 'نصيحة في الكتابة', fb.writing.level ? h('span', { class: 'tag' }, LEVELS[fb.writing.level] || fb.writing.level) : null),
-      h('p', {}, mixed(fb.writing.tipAr))) : '');
+      h('p', {}, mixed(fb.writing.tipAr))) : '',
+    ...(fb.adjustments ?? []).map((g) => h('div', { class: 'adj-prev' },
+      h('h3', {}, g.titleAr), g.noteAr ? ar('p', {}, g.noteAr) : '',
+      h('table', {}, h('thead', {}, h('tr', {}, h('th', {}, 'السؤال'), h('th', {}, 'قبل'), h('th', {}, 'بعد'), h('th', {}, 'من'))),
+        h('tbody', {}, g.rows.map((x) => h('tr', {}, h('td', {}, mixed(x.labelAr)), h('td', {}, fmt(x.before)), h('td', {}, fmt(x.after)), h('td', {}, fmt(x.max)))),
+          h('tr', { class: 'sum' }, h('td', {}, 'المجموع'), h('td', {}, fmt(g.before)), h('td', {}, fmt(g.after)), h('td', {}, fmt(g.max))))),
+      g.weight ? h('p', { class: 'muted' }, ...mixed(`من ${g.weight}% من درجة المقرر: ${fmt(g.scaledBefore)} قبل، و${fmt(g.scaledAfter)} بعد.`)) : '')));
 }
 function renderMain() {
   const s = byId.get(current), r = state[current], d = defaults(s);
@@ -408,7 +424,7 @@ function renderMain() {
       'aria-label': `الفقرة ${objLabel(o)}: ${fmt(v)}`, onclick: () => change(() => { r.obj[i] = v; renderMain(); }) }, fmt(v))));
     const shownA = shownAnswer(a, A), shownK = shownAnswer(o.key, A);
     return h('tr', { class: flagged ? 'flagged' : null, onclick: () => setPage(o.page ?? 1) },
-      h('td', {}, h('b', {}, objLabel(o))),
+      h('td', {}, h('b', {}, objLabel(o)), grantTag(objLabel(o))),
       h('td', { class: 'topic' }, topic(o)),
       h('td', {}, h('span', { class: 'letter ' + (right ? 'ok' : 'no'), title: a === 'X' ? 'خياران معلَّمان' : a === '-' ? 'لا شيء معلَّم' : null }, shownA),
         hasCorr && s.corrections?.[i] ? h('span', { class: 'tfx' }, mixed(s.corrections[i])) : null),
@@ -436,7 +452,7 @@ function renderMain() {
           e.target.classList.toggle('edited', +v !== +d.sq[j][k]);
           stale.hidden = fbEdited() || marksSame();
         } });
-      return h('div', { class: 'part' }, h('label', {}, mixed(p.label)), inp, h('span', { class: 'of' }, ` / ${fmt(p.max)}`));
+      return h('div', { class: 'part' }, h('label', {}, mixed(p.label)), inp, h('span', { class: 'of' }, ` / ${fmt(p.max)}`), grantTag(p.label) ?? grantTag(`Q${q.q}:${p.label}`));
     });
     const stale = h('p', { class: 'stale', hidden: fbEdited() || marksSame() }, 'غيّرتَ الدرجة: حدّث التوضيح للطالب ليوافق الدرجة الجديدة.');
     const answer = sd.parts

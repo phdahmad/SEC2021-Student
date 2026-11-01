@@ -194,20 +194,31 @@ test('re-issuing one code re-encrypts only that student', async () => {
 });
 
 // ---------------- review pages, results and the hub (SEC2021) ----------------
-import { buildFeedback, totalOf } from '../review/feedback-core.js';
+import { buildFeedback, totalOf, scoreOf } from '../review/feedback-core.js';
 import { MID_ASSESSMENT, Q1_ASSESSMENT } from './fixture.mjs';
 
 test('feedback core: partial true/false marks, Arabic summary, optional English', () => {
   const ans = 'ACDCABCDCBBDBADA' + 'FFTFTT';
   const r = { obj: [...Array(16).fill(1), 1, 0.5, 1, 1, 1, 1], sq: [[3, 4], [4, 2, 1]], far: ['', 'توضيح عربي'], fen: ['', 'English line'], sn: ['', ''], summaryExtra: '' };
   assert.equal(totalOf(r), 35.5);
+  const plain = { ...MID_ASSESSMENT, grants: undefined };
+  assert.match(buildFeedback(plain, { v: 'A', ans }, r).summary, /^حصلت على 35\.5 من 40\./);
+  assert.equal(buildFeedback(plain, { v: 'A', ans }, r).adjustments, undefined);
   const fb = buildFeedback(MID_ASSESSMENT, { v: 'A', ans }, r);
   assert.equal(fb.lang, 'ar');
-  assert.match(fb.summary, /^حصلت على 35\.5 من 40\./);
+  // grant: Office items in full for everyone — shown per question and in total, before and after
+  assert.equal(scoreOf(MID_ASSESSMENT, { v: 'A', ans }, r), 38.5);
+  assert.ok(fb.summary.startsWith('حصلت على 38.5 من 40 بعد احتساب أسئلة الأوفيس كاملة، وكانت درجتك قبلها 35.5.'), fb.summary);
+  const [adj] = fb.adjustments;
+  assert.equal(adj.titleAr, 'وعد أسئلة الأوفيس');
+  assert.deepEqual(adj.rows.map((x) => [x.before, x.after, x.max]), [[4, 4, 4], [2, 2, 2], [3, 6, 6]]);
+  assert.deepEqual([adj.before, adj.after, adj.max, adj.scaledBefore, adj.scaledAfter], [35.5, 38.5, 40, 17.75, 19.25]);
+  assert.throws(() => scoreOf({ ...MID_ASSESSMENT, grants: [{ titleAr: 'x', groups: [{ labelAr: 'x', items: ['ب'] }] }] }, { v: 'A' }, r), /matches 2/);
   const half = fb.points.find((p) => p.ref.startsWith('الفقرة 2-2'));
   assert.match(half.text, /حكمك صحيح \(خطأ\)، لكن التصحيح ناقص.*0\.5 من 1/);
   const q4 = fb.points.find((p) => p.ref.startsWith('السؤال الرابع'));
-  assert.equal(q4.text, 'توضيح عربي'); assert.equal(q4.textEn, 'English line');
+  assert.equal(q4.text, 'توضيح عربي واحتُسب لك الفرعان ب وج كاملَين ضمن أسئلة الأوفيس.'); assert.equal(q4.textEn, 'English line');
+  assert.match(fb.points.find((p) => p.ref.startsWith('الفقرة 2-2')).text, /^حكمك صحيح/);
   assert.match(q4.ref, /7 من 10$/);
   const q = buildFeedback(Q1_ASSESSMENT, { v: 'A', ans: 'ACACDBDAB-' }, { obj: [1, 1, 1, 1, 1, 1, 1, 1, 1, 0], sq: [], far: [], fen: [], sn: [] });
   assert.match(q.points[0].text, /تركت هذه الفقرة/);
@@ -243,7 +254,9 @@ test('results from review: saved edits win, diffs are listed, absentees are reco
   assert.ok(!r.stdout.includes(s0.id), 'full IDs are masked in the printout');
   const res = JSON.parse(fs.readFileSync(path.join(data, 'results/MID.json'), 'utf8'));
   assert.equal(res.approved, false);
-  const expected = s0.objMarks.slice(0, 21).reduce((a, b) => a + b, 0) + 8 + 10;
+  // items 1-13…1-16, 2-5 and 2-6 are Office items: the grant gives them in full (2-6 was set to 0 in the review)
+  const office = new Set([12, 13, 14, 15, 20, 21]);
+  const expected = s0.objMarks.map((m, i) => (office.has(i) ? 1 : m)).reduce((a, b) => a + b, 0) + 8 + 10;
   assert.equal(res.students[s0.id].score, expected);
   assert.equal(res.students[ALL[3].id].status, 'not_submitted');
   const hub = fs.readFileSync(path.join(data, 'review', 'index.html'), 'utf8');

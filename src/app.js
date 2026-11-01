@@ -3,9 +3,9 @@
 import {
   ITERATIONS, normalizeId, normalizeToken, fromHex,
   deriveMaster, locatorOf, decryptBundle, unpackPayload,
-} from './crypto.js?v=2';
-import { createViewer } from './viewer.js?v=2';
-import { t, getLang, applyLang } from './i18n.js?v=2';
+} from './crypto.js?v=3';
+import { createViewer } from './viewer.js?v=3';
+import { t, getLang, applyLang } from './i18n.js?v=3';
 
 const IDLE_MS = 15 * 60 * 1000;
 const THEME_KEY = 'sec2021_portal_theme';
@@ -305,6 +305,21 @@ function renderItem(id) {
     parts.push(h('div', { class: 'score-box' },
       h('bdi', { class: 'big', dir: 'ltr' }, `${fmt(it.score)} / ${fmt(it.max)}`),
       it.scaled != null && h('span', {}, mixed(t('scaled', fmt(it.scaled), fmt(it.weight))))));
+  }
+
+  // Marks given in full to everyone (e.g. the Office items): before and after, per question and in total.
+  for (const g of it.status === 'graded' ? it.feedback?.adjustments ?? [] : []) {
+    const num = (n) => h('bdi', { dir: 'ltr' }, fmt(n));
+    parts.push(h('section', { class: 'card panel adj', 'aria-label': g.titleAr },
+      h('h2', { dir: 'rtl', lang: 'ar' }, mixed(g.titleAr)),
+      g.noteAr && h('p', { dir: 'rtl', lang: 'ar' }, mixed(g.noteAr)),
+      h('div', { class: 'adj-wrap' }, h('table', { class: 'adj-table' },
+        h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, t('adjQuestion')), h('th', { scope: 'col' }, t('adjBefore')),
+          h('th', { scope: 'col' }, t('adjAfter')), h('th', { scope: 'col' }, t('adjOf')))),
+        h('tbody', {}, ...g.rows.map((x) => h('tr', { class: x.before < x.after ? 'up' : null },
+          h('th', { scope: 'row' }, h('bdi', { dir: 'rtl', lang: 'ar' }, mixed(x.labelAr))), h('td', {}, num(x.before)), h('td', {}, num(x.after)), h('td', {}, num(x.max))))),
+        h('tfoot', {}, h('tr', {}, h('th', { scope: 'row' }, t('adjTotal')), h('td', {}, num(g.before)), h('td', {}, num(g.after)), h('td', {}, num(g.max)))))),
+      g.weight != null && h('p', { class: 'muted' }, mixed(t('adjScaled', fmt(g.scaledBefore), fmt(g.scaledAfter), fmt(g.weight))))));
   }
 
   const intro = {
