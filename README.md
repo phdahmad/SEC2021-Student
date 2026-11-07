@@ -22,6 +22,7 @@ work, feedback and scanned sheets.
 | `node tools/guard.mjs` | Checks `dist/` again |
 | `node tools/reissue.mjs --id <ID>` | New code for one student; re-encrypts only that bundle |
 | `node tools/deploy.mjs` | Publishes `dist/` to `gh-pages` as one commit with no history |
+| `node tools/verify-dist.mjs` | Before publishing: opens every bundle in `dist/` with that student's real code (never printed), checks scores and page images against the approved results, and that wrong or other students' codes open nothing |
 | `npm test` | Security and importer tests (fake data only) |
 
 Set the data folder in `local.config.json` (copy `local.config.example.json`).
