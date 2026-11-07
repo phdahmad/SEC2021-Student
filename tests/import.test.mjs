@@ -171,6 +171,13 @@ test('import: a 10-item quiz from the gradebook', () => {
   const draft = JSON.parse(fs.readFileSync(path.join(data, 'batches', 'Q1', 'Q1.draft.json'), 'utf8'));
   const rep = readCsv(path.join(data, 'batches', 'Q1', 'import-report.csv'));
   assert.deepEqual(rep.map((x) => Number(x.excel)), [10, 9, 8]);
+  // the approved results carry the same scores (a quiz draft has mcq only, no objMarks)
+  for (const d of draft) for (const n of [1, 2]) fs.writeFileSync(path.join(data, 'batches', 'Q1', 'web', `${d.id}_p${n}.webp`), 'x');
+  const res = run(['tools/results-from-review.mjs', '--batch', 'Q1', '--data', data, '--approve', 'test']);
+  assert.equal(res.status, 0, res.stderr);
+  const out = JSON.parse(fs.readFileSync(path.join(data, 'results', 'Q1.json'), 'utf8'));
+  const byIdOut = Array.isArray(out.students) ? Object.fromEntries(out.students.map((x) => [x.id, x])) : out.students;
+  assert.deepEqual(S.map((st) => byIdOut[st.id].score), [10, 9, 8]);
   assert.deepEqual(draft.map((d) => d.mcq.length), [10, 10, 10]);
 });
 

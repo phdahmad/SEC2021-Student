@@ -25,7 +25,8 @@ export function marksOf(A, d, savedRec) {
   const obj = V.objective ?? [];
   const sh = d.short ?? [];
   const base = {
-    obj: obj.map((o, i) => objDefault(o, i, d)),
+    // drafts from the importer carry the answers as mcq (+ tf), not as ans
+    obj: obj.map((o, i) => objDefault(o, i, { ...d, ans: d.ans ?? (d.mcq ?? '') + (d.tf ?? '') })),
     sq: sh.map((q) => [...(q.marks ?? [])]), sn: sh.map((q) => q.note ?? ''),
     far: sh.map((q) => q.fb?.ar ?? ''), fen: sh.map((q) => q.fb?.en ?? ''),
     wLevel: d.writing?.level ?? '', wTip: d.writing?.tip_ar ?? '', summaryExtra: '',
